@@ -1,14 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import API from "../utils/axiosInstance";
+import axios from "axios";
 
 const TutorDashboard = () => {
   const { user, loading } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [pastSessions, setPastSessions] = useState([]);
+  const [tutorAvailability, setTutorAvailability] = useState({});
   const [activeTab, setActiveTab] = useState("upcoming");
 
   useEffect(() => {
+    const fetchTutorAvailability = async () => {
+      try {
+        const { data } = await axios.get("http://localhost:5000/api/users/register");
+        if (data.availability) {
+          setTutorAvailability(data.availability);
+        }
+      } catch (error) {
+        console.error("Error fetching tutor availability:", error);
+      }
+    };
+
     const fetchSessions = async () => {
       try {
         const { data } = await API.get("/bookings/tutor");
@@ -30,6 +43,7 @@ const TutorDashboard = () => {
             comment: booking.comment,
           });
         });
+
         setSessions(Object.values(groupedSessions));
       } catch (error) {
         console.error("Error fetching tutor sessions:", error);
@@ -46,6 +60,7 @@ const TutorDashboard = () => {
     };
 
     if (user?.role === "tutor") {
+      fetchTutorAvailability();
       fetchSessions();
       fetchPastSessions();
     }
@@ -86,7 +101,9 @@ const TutorDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {sessions.map((session, index) => (
                   <div key={index} className="bg-white p-6 rounded-lg shadow-md">
-                    <h4 className="text-lg font-bold text-blue-900">{session.day}</h4>
+                    <h4 className="text-lg font-bold text-blue-900">
+                      {session.day} {tutorAvailability[session.day] ? "(Available)" : "(Not Available)"}
+                    </h4>
                     <h4 className="text-lg font-bold text-blue-700">{session.startTime} - {session.endTime}</h4>
                     <p className="mt-2 font-semibold">Students Attending: {session.students.length}</p>
                     <ul className="mt-2">
