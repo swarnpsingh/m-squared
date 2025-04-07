@@ -3,27 +3,49 @@ import { Link } from "react-router-dom";
 
 const Home = () => {
   return (
-    <div className="h-screen flex flex-col justify-center items-center text-center p-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-      <h1 className="text-4xl font-bold mb-4">Welcome to m-squared</h1>
-      <p className="text-lg mb-6 max-w-xl">
-        A platform where students can connect with volunteer tutors to learn mathematics beyond school hours.
-      </p>
+    <div className="min-h-screen bg-gradient-to-br from-[#1a0b29] to-[#130f23] text-white flex flex-col">
       
-      <div className="flex gap-6">
-        <Link to="/signup-student" className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-gray-200 transition">
-          Sign Up as Student
-        </Link>
-        <Link to="/signup-tutor" className="bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-gray-200 transition">
-          Sign Up as Tutor
+      {/* Navbar - Stays at the top */}
+      <nav className="w-full flex justify-between items-center p-6">
+        {/* Logo */}
+        <div className="flex items-center gap-2 text-xl font-semibold">
+          <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+            <span className="text-lg font-bold">🔵</span>
+          </div>
+          <span>m-squared</span>
+        </div>
+
+        {/* Tutor Sign-in/Sign-up */}
+        <div className="flex items-center gap-4">
+          <span className="text-gray-300 hidden sm:block">Are you a tutor? →</span>
+          <Link to="/login-tutor" className="text-gray-300 hover:text-white">Sign in</Link>
+          <Link to="/signup-tutor" className="bg-purple-500 px-5 py-2 rounded-lg font-semibold shadow-md hover:bg-purple-600 transition">
+            Sign up →
+          </Link>
+        </div>
+      </nav>
+
+      {/* Hero Section - Stays centered */}
+      <div className="flex-grow flex flex-col items-center justify-center text-center px-6">
+        <p className="text-sm bg-purple-700 px-4 py-1 rounded-full mb-4">
+          ✨ Your Ultimate Learning Companion!
+        </p>
+        <h1 className="text-5xl font-extrabold leading-tight max-w-[90%] md:max-w-3xl">
+          Elevate Your Math Learning with <span className="text-purple-400">m-squared</span>
+        </h1>
+        <p className="text-lg text-gray-300 mt-4 max-w-[90%] md:max-w-xl">
+          A platform where students connect with expert tutors to master mathematics beyond school hours.
+        </p>
+
+        {/* Call to Action Button */}
+        <Link to="/signup-student" className="mt-6 bg-purple-600 px-8 py-3 text-lg rounded-full font-semibold shadow-lg hover:bg-purple-700 transition">
+          Get Started for Free
         </Link>
       </div>
 
-      <div className="mt-6">
-        <p>Already have an account?</p>
-        <div className="flex gap-4 mt-2">
-          <Link to="/login-student" className="underline">Login as Student</Link>
-          <Link to="/login-tutor" className="underline">Login as Tutor</Link>
-        </div>
+      {/* Footer */}
+      <div className="text-center text-gray-500 p-6">
+        <p>Already have an account? <Link to="/login-student" className="underline text-white">Sign in</Link></p>
       </div>
     </div>
   );

@@ -9,9 +9,15 @@ dotenv.config(); // Ensure .env variables are loaded
 const secretKey = process.env.JWT_SECRET; // This should now be available
 const app = express();
 app.use(express.json());
-app.use(cors());
+
+// Allow requests from your frontend
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+
+
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/auth", require("./routes/userRoutes"));
+
+
 
 
 const connectDB = async () => {
@@ -40,5 +46,5 @@ app.get("/", (req, res) => {
   res.send("M-Squared API is running...");
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

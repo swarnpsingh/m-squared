@@ -1,151 +1,219 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import API from "../utils/axiosInstance";
-import axios from "axios";
+import { Menu, X } from "lucide-react";
 
 const TutorDashboard = () => {
   const { user, loading } = useAuth();
-  const [sessions, setSessions] = useState([]);
-  const [pastSessions, setPastSessions] = useState([]);
   const [tutorAvailability, setTutorAvailability] = useState({});
-  const [activeTab, setActiveTab] = useState("upcoming");
+  const [bookings, setBookings] = useState([]);
+  const [activeTab, setActiveTab] = useState("availability");
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const fetchTutorAvailability = async () => {
+    const fetchTutorData = async () => {
       try {
-        const { data } = await axios.get("http://localhost:5000/api/users/register");
-        if (data.availability) {
-          setTutorAvailability(data.availability);
+        if (user?.role === "tutor") {
+          const [availabilityRes, bookingsRes] = await Promise.all([
+            API.get("/availability/tutor"),
+            API.get("/bookings/tutor"),
+          ]);
+
+          setTutorAvailability(availabilityRes.data);
+          setBookings(bookingsRes.data);
         }
       } catch (error) {
-        console.error("Error fetching tutor availability:", error);
+        console.error("Error fetching tutor data:", error);
       }
     };
 
-    const fetchSessions = async () => {
+    const fetchLeaderboard = async () => {
       try {
-        const { data } = await API.get("/bookings/tutor");
-        console.log("Fetched sessions:", data);
-
-        const groupedSessions = {};
-        data.forEach((booking) => {
-          const key = `${booking.day}-${booking.startTime}-${booking.endTime}`;
-          if (!groupedSessions[key]) {
-            groupedSessions[key] = {
-              day: new Date(booking.day).toLocaleDateString("en-US", { weekday: "long" }),
-              startTime: booking.startTime,
-              endTime: booking.endTime,
-              students: [],
-            };
-          }
-          groupedSessions[key].students.push({
-            name: booking.studentId.name,
-            comment: booking.comment,
-          });
-        });
-
-        setSessions(Object.values(groupedSessions));
+        const res = await API.get("/users/leaderboard");
+        setLeaderboard(
+          res.data.map((tutor) => ({
+            ...tutor,
+            studentCount: tutor.studentCount || 0,
+          }))
+        );
       } catch (error) {
-        console.error("Error fetching tutor sessions:", error);
+        console.error("Error fetching leaderboard:", error);
       }
     };
 
-    const fetchPastSessions = async () => {
-      try {
-        const { data } = await API.get("/bookings/tutor/history");
-        setPastSessions(data);
-      } catch (error) {
-        console.error("Error fetching past sessions:", error);
-      }
-    };
-
-    if (user?.role === "tutor") {
-      fetchTutorAvailability();
-      fetchSessions();
-      fetchPastSessions();
+    if (activeTab === "leaderboard") {
+      fetchLeaderboard();
     }
-  }, [user]);
+    fetchTutorData();
+  }, [user, activeTab]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/";
+  const handleViewBookings = (day, startTime, endTime) => {
+    const slotBookings = bookings.filter(
+      (booking) =>
+        booking.day === day &&
+        booking.startTime === startTime &&
+        booking.endTime === endTime
+    );
+
+    setSelectedSlot({ day, startTime, endTime, students: slotBookings });
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedSlot(null);
   };
 
   if (loading) {
-    return (
-      <div className="text-center mt-10 text-lg font-semibold">Loading...</div>
-    );
+    return <div className="text-center text-white mt-10 text-lg font-semibold">Loading...</div>;
   }
 
   return (
-    <div className="flex h-screen">
-      <aside className="w-1/5 min-w-[250px] bg-blue-500 text-white p-6 h-screen sticky top-0 flex flex-col">
-        <h2 className="text-xl font-bold">Tutor Dashboard</h2>
-        <ul className="mt-6">
-          <li className={`p-2 cursor-pointer ${activeTab === "upcoming" ? "bg-gray-700" : ""}`} onClick={() => setActiveTab("upcoming")}>Upcoming Sessions</li>
-          <li className={`p-2 cursor-pointer ${activeTab === "history" ? "bg-gray-700" : ""}`} onClick={() => setActiveTab("history")}>My Sessions</li>
+    <div className="flex h-screen bg-gradient-to-br from-[#1a0b29] to-[#130f23] text-white relative">
+      {/* Burger Menu Button */}
+      <button
+        className="md:hidden fixed top-4 left-4 bg-purple-700 p-3 rounded-md z-50"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+      >
+        {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Sidebar */}
+      <div
+        className={`${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0 transition-transform fixed md:static w-64 bg-[#130f23] p-6 h-full border-r border-gray-700 flex flex-col z-40`}
+      >
+        <h2 className="text-xl font-bold text-purple-400 mb-6">Tutor Dashboard</h2>
+        <ul className="space-y-2 flex-grow">
+          <li
+            className={`p-3 cursor-pointer rounded-lg ${
+              activeTab === "availability" ? "bg-purple-600" : "hover:bg-gray-700"
+            }`}
+            onClick={() => setActiveTab("availability")}
+          >
+            Availability
+          </li>
+          <li
+            className={`p-3 cursor-pointer rounded-lg ${
+              activeTab === "leaderboard" ? "bg-purple-600" : "hover:bg-gray-700"
+            }`}
+            onClick={() => setActiveTab("leaderboard")}
+          >
+            Leaderboard
+          </li>
         </ul>
-        <button className="mt-auto bg-red-600 hover:bg-red-700 text-white p-2 rounded" onClick={handleLogout}>Logout</button>
-      </aside>
+        {/* Logout Button Fixed at Bottom */}
+        <button
+          className="bg-red-600 hover:bg-red-700 p-2 rounded-lg shadow-md mt-auto"
+          onClick={() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            window.location.href = "/";
+          }}
+        >
+          Logout
+        </button>
+      </div>
 
-      <div className="flex-1 p-6 bg-gray-100 overflow-auto">
-        <h2 className="text-3xl font-bold mb-6">Welcome, {user?.name}!</h2>
+      {/* Main Content */}
+      <div className="flex-1 p-6 overflow-auto">
+        <h2 className="text-3xl font-bold mb-6 text-purple-400">Welcome, {user?.name}!</h2>
 
-        {activeTab === "upcoming" ? (
+        {activeTab === "availability" && (
           <>
-            <h3 className="text-2xl font-semibold mb-4">Available Sessions</h3>
-            {sessions.length === 0 ? (
-              <p className="text-gray-500">No available sessions.</p>
+            <h3 className="text-2xl font-semibold mb-4">Your Availability</h3>
+            {Object.keys(tutorAvailability).length === 0 ? (
+              <p className="text-gray-400">No availability set.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {sessions.map((session, index) => (
-                  <div key={index} className="bg-white p-6 rounded-lg shadow-md">
-                    <h4 className="text-lg font-bold text-blue-900">
-                      {session.day} {tutorAvailability[session.day] ? "(Available)" : "(Not Available)"}
-                    </h4>
-                    <h4 className="text-lg font-bold text-blue-700">{session.startTime} - {session.endTime}</h4>
-                    <p className="mt-2 font-semibold">Students Attending: {session.students.length}</p>
-                    <ul className="mt-2">
-                      {session.students.map((student, idx) => (
-                        <li key={idx} className="text-gray-700">
-                          <strong>{student.name}</strong>: {student.comment}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <h3 className="text-2xl font-semibold mb-4">My Sessions (Past)</h3>
-            {pastSessions.length === 0 ? (
-              <p className="text-gray-500">No past sessions.</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {pastSessions.map((session, index) => (
-                  <div key={index} className="bg-white p-6 rounded-lg shadow-md">
-                    <h4 className="text-lg font-bold text-blue-900">{new Date(session.day).toLocaleDateString("en-US", { weekday: "long" })}</h4>
-                    <h4 className="text-lg font-bold text-blue-700">{session.startTime} - {session.endTime}</h4>
-                    <p className="mt-2 font-semibold">Students Attended: {session.students.length}</p>
-                    <ul className="mt-2">
-                      {session.students.map((student, idx) => (
-                        <li key={idx} className="text-gray-700">
-                          <strong>{student.name}</strong>: {student.comment}
-                        </li>
-                      ))}
-                    </ul>
+                {Object.entries(tutorAvailability).map(([day, slots]) => (
+                  <div key={day} className="bg-[#1f1a2e] p-6 rounded-lg border border-gray-700">
+                    <h4 className="text-lg font-bold text-purple-400">{day}</h4>
+                    {slots.length > 0 ? (
+                      <ul className="mt-2">
+                        {slots.map((slot, idx) => (
+                          <li key={idx} className="flex justify-between items-center">
+                            {slot.start} - {slot.end}
+                            <button
+                              onClick={() => handleViewBookings(day, slot.start, slot.end)}
+                              className="ml-4 bg-purple-500 px-3 py-1 rounded hover:bg-purple-700 my-2"
+                            >
+                              View Bookings
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-gray-400">You're not available.</p>
+                    )}
                   </div>
                 ))}
               </div>
             )}
           </>
         )}
+
+        {activeTab === "leaderboard" && (
+          <>
+            <h3 className="text-2xl font-semibold mb-4">Tutor Leaderboard</h3>
+            <table className="w-full bg-[#1f1a2e] border border-gray-700">
+              <thead className="bg-purple-700 text-white">
+                <tr>
+                  <th className="p-3 text-left">Tutor Name</th>
+                  <th className="p-3 text-left">Student Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboard.length > 0 ? (
+                  leaderboard.map((tutor, index) => (
+                    <tr key={index} className="border-b border-gray-700">
+                      <td className="p-3">{tutor.name}</td>
+                      <td className="p-3">{tutor.studentCount ?? 0}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="2" className="p-3 text-center text-gray-400">No data available.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </>
+        )}
       </div>
+    {/* Modal for Booking Details */}
+    {showModal && selectedSlot && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center">
+          <div className="bg-[#1f1a2e] p-6 rounded-lg shadow-lg w-96 border border-gray-700">
+            <h3 className="text-lg font-bold text-purple-400 mb-4">
+              Bookings for {selectedSlot.day} ({selectedSlot.startTime} -{" "}
+              {selectedSlot.endTime})
+            </h3>
+            {selectedSlot.students.length > 0 ? (
+              <ul className="space-y-2">
+                {selectedSlot.students.map((booking, index) => (
+                  <li key={index} className="bg-gray-800 p-3 rounded-md">
+                    <strong className="text-white">{booking.studentId.name}</strong>
+                    <p className="text-sm text-gray-400">"{booking.comment || "No comment"}"</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-400">No students booked this slot.</p>
+            )}
+            <button onClick={closeModal} className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default TutorDashboard;
+

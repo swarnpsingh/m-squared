@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../utils/axiosInstance";
+import { Loader2 } from "lucide-react";
 
 const SignupTutor = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const SignupTutor = () => {
     },
     courses: []
   });
+  const [loading, setLoading] = useState(false);
 
   const handleTimeChange = (day, index, field, value) => {
     setFormData((prev) => {
@@ -59,7 +61,7 @@ const SignupTutor = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:5000/api/users/register", {
+      const response = await fetch("http://localhost:5001/api/users/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -84,16 +86,16 @@ const SignupTutor = () => {
   
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md w-full max-w-lg">
-        <h2 className="text-3xl font-bold text-center mb-6 text-blue-900">Tutor Signup</h2>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#1a0b29] to-[#130f23]">
+      <form onSubmit={handleSubmit} className="bg-[#1f1a2e] p-8 rounded-2xl shadow-lg border border-gray-700 my-18">
+        <h2 className="text-2xl font-bold text-white text-center mb-6">Tutor Signup</h2>
   
         {/* Input Fields */}
         <div className="space-y-4">
           <input
             type="text"
             placeholder="Full Name"
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 bg-[#2a1e4f] text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
@@ -102,7 +104,7 @@ const SignupTutor = () => {
           <input
             type="email"
             placeholder="Email"
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 bg-[#2a1e4f] text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
@@ -111,7 +113,7 @@ const SignupTutor = () => {
           <input
             type="password"
             placeholder="Password"
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 bg-[#2a1e4f] text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             required
@@ -120,7 +122,7 @@ const SignupTutor = () => {
   
         {/* Availability Section */}
         <div className="mt-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Select Availability:</h3>
+          <h3 className="text-lg font-semibold text-white mb-2">Select Availability:</h3>
           {Object.keys(formData.availability).map((day) => (
             <div key={day} className="mb-4">
               <h4 className="font-semibold text-gray-600">{day}</h4>
@@ -131,14 +133,14 @@ const SignupTutor = () => {
                       type="time"
                       value={slot.start}
                       onChange={(e) => handleTimeChange(day, index, "start", e.target.value)}
-                      className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="p-2 border border-white rounded-md focus:outline-none focus:ring-2 focus:ring-white-400"
                     />
                     <span>-</span>
                     <input
                       type="time"
                       value={slot.end}
                       onChange={(e) => handleTimeChange(day, index, "end", e.target.value)}
-                      className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="p-2 border border-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                     <button
                       type="button"
@@ -152,7 +154,7 @@ const SignupTutor = () => {
               </div>
               <button
                 type="button"
-                className="mt-2 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition"
+                className="mt-2 bg-purple-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition"
                 onClick={() => addTimeSlot(day)}
               >
                 ➕ Add Time Slot
@@ -162,10 +164,10 @@ const SignupTutor = () => {
         </div>
 
         {/* Courses Selection */}
-      <label className="block font-semibold mt-3">Select Courses:</label>
+      <label className="block font-semibold text-white mt-3">Select Courses:</label>
       <div className="grid grid-cols-2 gap-2">
         {["AA HL", "AA SL", "AI HL", "AI SL"].map((course) => (
-          <label key={course} className="flex items-center space-x-2">
+          <label key={course} className="flex items-center space-x-2 text-white">
             <input
               type="checkbox"
               value={course}
@@ -177,8 +179,9 @@ const SignupTutor = () => {
       </div>
   
         {/* Submit Button */}
-        <button type="submit" className="w-full mt-6 bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition">
-          Sign Up
+        <button type="submit" className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 flex justify-center items-center mt-6"
+        disabled={loading}>
+          {loading ? <Loader2 className="animate-spin" /> : "Sign Up"}
         </button>
       </form>
     </div>

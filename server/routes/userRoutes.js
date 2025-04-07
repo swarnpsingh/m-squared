@@ -133,7 +133,15 @@ router.get("/tutors", async (req, res) => {
   }
 });
 
+router.get("/leaderboard", async (req, res) => {
+  try {
+    const tutors = await User.find({ role: "tutor" }).sort({ studentCount: -1 }).select("name studentCount");
 
-  
+    res.json(tutors);
+  } catch (error) {
+    console.error("Error fetching leaderboard:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+});
 
 module.exports = router;

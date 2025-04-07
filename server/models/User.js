@@ -18,6 +18,7 @@ const UserSchema = new mongoose.Schema({
     }
   },
   courses: { type: [String], default: [] }, // Store selected courses
+  studentCount: { type: Number, default: 0 }, // New field to track students
 });
 
 module.exports = mongoose.model("User", UserSchema);
